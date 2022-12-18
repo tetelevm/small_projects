@@ -16,6 +16,9 @@ __all__ = [
     "Input",
     "While",
     "WhileEnd",
+
+    "GiveSomeFishfood",
+    "GiveBanana",
 ]
 
 
@@ -159,7 +162,7 @@ class Output(Operator):
             )
             raise ValueError(msg)
         print(chr(char_code), end="")
-        runtime._linebreak_required = True
+        runtime._linebreak_required = char_code != 10  # not "\n"
 
 
 class Input(Operator):
@@ -230,3 +233,38 @@ class WhileEnd(Operator):
                     raise ValueError("unexpected end of loop")
 
                 runtime.cursor -= 1
+
+
+# === extended operators ===============================================
+
+
+class GiveSomeFishfood(Operator):
+    """
+    The joking operator from the Blub language.
+    """
+
+    def do(self, runtime):
+        if runtime._linebreak_required:
+            print()
+        print("*Fishfood transfer takes place* - \"Blub!\"")
+        runtime._linebreak_required = False
+
+
+class GiveBanana(Operator):
+    """
+    The joking operator from the Ook language.
+    """
+
+    def do(self, runtime):
+        if runtime._linebreak_required:
+            print()
+        print("*Banana transfer takes place* - \"Ook!\"")
+        runtime._linebreak_required = False
+
+
+
+
+
+
+
+

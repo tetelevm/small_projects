@@ -8,6 +8,7 @@ __all__ = [
     "Brainfuck",
     "Alphuck",
     "BrainSymbol",
+    "EmEmFuck",
     "German",
     "MessyScript",
     "MorseFuck",
@@ -17,7 +18,15 @@ __all__ = [
     "Ternary",
     "Triplet",
     "UwU",
+    "WholesomeFuck",
+    "ZZZ",
+
+    "Blub",
+    "Ook",
 ]
+
+
+# === bases ============================================================
 
 
 class Interpreter(ABC):
@@ -70,6 +79,24 @@ class Interpreter(ABC):
         return context, underline
 
 
+class Trivial(Interpreter, ABC):
+    """
+    A class-label that shows that the language is a simple translation
+    of the original BrainFuck without the addition of any operators or
+    rules.
+    """
+    # Fun fact - BrainFuck is also a subclass :)
+
+
+class Extended(Interpreter, ABC):
+    """
+    A class-label that shows that the language is backward compatible
+    with BrainFuck*, but has some extension on top of it.
+
+    * - by operator logic, not by specific writing
+    """
+
+
 class WithUniqueCommand(Interpreter, ABC):
     """
     A subclass of interpreters that have a unique mapping between a
@@ -82,9 +109,9 @@ class WithUniqueCommand(Interpreter, ABC):
 
     def translate(self) -> list[Operator]:
         operator_names = self.operators.keys()
-        operators = []
 
         cursor = 0
+        operators = []
         while cursor <= len(self.text):
             for name in operator_names:
                 if not self.text[cursor:].startswith(name):
@@ -104,7 +131,47 @@ class WithUniqueCommand(Interpreter, ABC):
         return operators
 
 
-class Brainfuck(WithUniqueCommand):
+class WithOrderedCommand(Interpreter, ABC):
+    """
+    In general, this is not particularly different from translations
+    with unique commands, but the order of the commands is important
+    here, since some commands may include others.
+    Therefore, the parsing is a bit more complicated than in the
+    original.
+    That includes the original BF, more examples: EmEmFuck, zzz, Unibrain.
+    """
+
+    operators: dict[str, tuple[int, Type[Operator]]]
+
+    def translate(self) -> list[Operator]:
+        sorted_operators = sorted(self.operators.items(), key=lambda item: item[1][0])
+        operator_names = [item[0] for item in sorted_operators]
+
+        cursor = 0
+        operators = []
+        while cursor <= len(self.text):
+            for name in operator_names:
+                if not self.text[cursor:].startswith(name):
+                    continue
+
+                operator_class = self.operators[name][1]
+                error_info = self.make_error_info(cursor, cursor+len(name))
+                operator = operator_class(name, error_info)
+
+                operators.append(operator)
+                cursor += len(name)
+                break
+            else:
+                cursor += 1
+
+        operators.append(End("~end~", ("", "")))
+        return operators
+
+
+# === trivial languages ================================================
+
+
+class Brainfuck(Trivial, WithUniqueCommand):
     """
     The standard realization of the BrainFuck language, the other
     similar languages are either extensions or translations.
@@ -141,7 +208,7 @@ class Brainfuck(WithUniqueCommand):
     }
 
 
-class Alphuck(WithUniqueCommand):
+class Alphuck(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+---+
@@ -168,7 +235,7 @@ class Alphuck(WithUniqueCommand):
     }
 
 
-class BrainSymbol(WithUniqueCommand):
+class BrainSymbol(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+---+
@@ -195,7 +262,35 @@ class BrainSymbol(WithUniqueCommand):
     }
 
 
-class German(WithUniqueCommand):
+class EmEmFuck(Trivial, WithUniqueCommand):
+    # original name: !!Fuck
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+---------------+
+    | > | !!!!!#        |
+    | < | !!!!!!#       |
+    | + | !!!!!!!#      |
+    | - | !!!!!!!!#     |
+    | . | !!!!!!!!!!#   |
+    | , | !!!!!!!!!#    |
+    | [ | !!!!!!!!!!!#  |
+    | ] | !!!!!!!!!!!!# |
+    +---+---------------+
+    """
+
+    operators = {
+        "!!!!!#": Right,
+        "!!!!!!#": Left,
+        "!!!!!!!#": Increment,
+        "!!!!!!!!#": Decrement,
+        "!!!!!!!!!!#": Output,
+        "!!!!!!!!!#": Input,
+        "!!!!!!!!!!!#": While,
+        "!!!!!!!!!!!!#": WhileEnd,
+    }
+
+
+class German(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+-----------------+
@@ -222,7 +317,7 @@ class German(WithUniqueCommand):
     }
 
 
-class MessyScript(WithUniqueCommand):
+class MessyScript(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+------------------------------------------------------------------------------------------------+
@@ -249,7 +344,7 @@ class MessyScript(WithUniqueCommand):
     }
 
 
-class MorseFuck(WithUniqueCommand):
+class MorseFuck(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+-----+
@@ -276,7 +371,7 @@ class MorseFuck(WithUniqueCommand):
     }
 
 
-class Pewlang(WithUniqueCommand):
+class Pewlang(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+-----+
@@ -303,7 +398,7 @@ class Pewlang(WithUniqueCommand):
     }
 
 
-class ReverseFuck(WithUniqueCommand):
+class ReverseFuck(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+---+
@@ -330,7 +425,7 @@ class ReverseFuck(WithUniqueCommand):
     }
 
 
-class Roadrunner(WithUniqueCommand):
+class Roadrunner(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+------+
@@ -357,7 +452,7 @@ class Roadrunner(WithUniqueCommand):
     }
 
 
-class Ternary(WithUniqueCommand):
+class Ternary(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+----+
@@ -384,7 +479,7 @@ class Ternary(WithUniqueCommand):
     }
 
 
-class Triplet(WithUniqueCommand):
+class Triplet(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+-----+
@@ -411,7 +506,7 @@ class Triplet(WithUniqueCommand):
     }
 
 
-class UwU(WithUniqueCommand):
+class UwU(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
     +---+-----+
@@ -436,3 +531,142 @@ class UwU(WithUniqueCommand):
         "~w~": While,
         "¯w¯": WhileEnd,
     }
+
+
+class WholesomeFuck(Trivial, WithOrderedCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----+
+    | > | :>  |
+    | < | :<  |
+    | + | :>> |
+    | - | :<< |
+    | . | ;<< |
+    | , | ;>> |
+    | [ | ;<  |
+    | ] | ;>  |
+    +---+-----+
+    """
+
+    operators = {
+        ":>": (4, Right),
+        ":<": (5, Left),
+        ":>>": (0, Increment),
+        ":<<": (1, Decrement),
+        ";<<": (2, Output),
+        ";>>": (3, Input),
+        ";<": (6, While),
+        ";>": (7, WhileEnd),
+    }
+
+
+class ZZZ(Trivial, WithOrderedCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+------+
+    | > | zz   |
+    | < | -zz  |
+    | + | z    |
+    | - | -z   |
+    | . | zzz  |
+    | , | -zzz |
+    | [ | z+z  |
+    | ] | z-z  |
+    +---+------+
+    """
+
+    operators = {
+        "zz": (2, Right),
+        "-zz": (3, Left),
+        "z": (7, Increment),
+        "-z": (6, Decrement),
+        "zzz": (0, Output),
+        "-zzz": (1, Input),
+        "z+z": (4, While),
+        "z-z": (5, WhileEnd),
+    }
+
+
+# === extended languages ===============================================
+
+
+class Blub(Extended, WithUniqueCommand):
+    """
+    A translation of BrainFuck with a small addition.
+    Matching:
+    +---+-------------+
+    | > | Blub. Blub? |
+    | < | Blub? Blub. |
+    | + | Blub. Blub. |
+    | - | Blub! Blub! |
+    | . | Blub! Blub. |
+    | , | Blub. Blub! |
+    | [ | Blub! Blub? |
+    | ] | Blub? Blub! |
+    +---+-------------+
+    Extension:
+    +-------------+---------------------------------------------------------+
+    | Blub? Blub? | (joking operator) Give the memory pointer some fishfood |
+    +-------------+---------------------------------------------------------+
+    """
+
+    operators = {
+        "Blub. Blub?": Right,
+        "Blub? Blub.": Left,
+        "Blub. Blub.": Increment,
+        "Blub! Blub!": Decrement,
+        "Blub! Blub.": Output,
+        "Blub. Blub!": Input,
+        "Blub! Blub?": While,
+        "Blub? Blub!": WhileEnd,
+        "Blub? Blub?": GiveSomeFishfood,
+    }
+
+
+class Ook(Extended, WithUniqueCommand):
+    """
+    A translation of BrainFuck with a small addition.
+    Matching:
+    +---+-----------+
+    | > | Ook. Ook? |
+    | < | Ook? Ook. |
+    | + | Ook. Ook. |
+    | - | Ook! Ook! |
+    | . | Ook! Ook. |
+    | , | Ook. Ook! |
+    | [ | Ook! Ook? |
+    | ] | Ook? Ook! |
+    +---+-----------+
+    Extension:
+    +-----------+----------------------------------------------------+
+    | Ook? Ook? | (joking operator) Give the memory pointer a banana |
+    +-----------+----------------------------------------------------+
+    """
+
+    operators = {
+        "Ook. Ook?": Right,
+        "Ook? Ook.": Left,
+        "Ook. Ook.": Increment,
+        "Ook! Ook!": Decrement,
+        "Ook! Ook.": Output,
+        "Ook. Ook!": Input,
+        "Ook! Ook?": While,
+        "Ook? Ook!": WhileEnd,
+        "Ook? Ook?": GiveBanana,
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
