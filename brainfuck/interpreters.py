@@ -5,9 +5,18 @@ from operators import *
 
 
 __all__ = [
-    "Interpreter",
-
     "Brainfuck",
+    "Alphuck",
+    "BrainSymbol",
+    "German",
+    "MessyScript",
+    "MorseFuck",
+    "Pewlang",
+    "ReverseFuck",
+    "Roadrunner",
+    "Ternary",
+    "Triplet",
+    "UwU",
 ]
 
 
@@ -129,4 +138,301 @@ class Brainfuck(WithUniqueCommand):
         ",": Input,
         "[": While,
         "]": WhileEnd,
+    }
+
+
+class Alphuck(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+---+
+    | > | a |
+    | < | c |
+    | + | e |
+    | - | i |
+    | . | j |
+    | , | o |
+    | [ | p |
+    | ] | s |
+    +---+---+
+    """
+
+    operators = {
+        "a": Right,
+        "c": Left,
+        "e": Increment,
+        "i": Decrement,
+        "j": Output,
+        "o": Input,
+        "p": While,
+        "s": WhileEnd,
+    }
+
+
+class BrainSymbol(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+---+
+    | > | ! |
+    | < | @ |
+    | + | # |
+    | - | $ |
+    | . | % |
+    | , | ^ |
+    | [ | & |
+    | ] | * |
+    +---+---+
+    """
+
+    operators = {
+        "!": Right,
+        "@": Left,
+        "#": Increment,
+        "$": Decrement,
+        "%": Output,
+        "^": Input,
+        "&": While,
+        "*": WhileEnd,
+    }
+
+
+class German(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----------------+
+    | > | LINKS           |
+    | < | RECHTS          |
+    | + | ADDITION        |
+    | - | SUBTRAKTION     |
+    | . | EINGABE         |
+    | , | AUSGABE         |
+    | [ | SCHLEIFENANFANG |
+    | ] | SCHLEIFENENDE   |
+    +---+-----------------+
+    """
+
+    operators = {
+        "LINKS": Right,
+        "RECHTS": Left,
+        "ADDITION": Increment,
+        "SUBTRAKTION": Decrement,
+        "EINGABE": Output,
+        "AUSGABE": Input,
+        "SCHLEIFENANFANG": While,
+        "SCHLEIFENENDE": WhileEnd,
+    }
+
+
+class MessyScript(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+------------------------------------------------------------------------------------------------+
+    | > | 930pl[wer;lr[p[lwetl[erwltrewt[er;t3l.t;43.';w]er\e]e;g[er.][.rt[.e[w]r[                       |
+    | < | \];[]lr[plp[r[pelpr[,gp[lsp[glr[pt,g[pr,g[lsg[plfsdgdsfpl[erlt[lwt[43[]5l4[;.tr.               |
+    | + | 20ri-4;t[5;t'[y;e'teu;354y;;56;'5lu;y65l'ytyl';ry;rtly;t'yl'r;y'                               |
+    | - | ];ae][flw[er.[w;r';ew.'rt;e';,erf/r;t.e'.fre.f'r;.rg;el[rw][p43p3                              |
+    | . | ][][e[w]prepf][eg]rpe[t]lre[]lgr]o320wr89`]2l1]p`l23pr2o4]2lf]2;r][32;r][2``]234;][23          |
+    | , | ]\]p][l[weo[p4o40ti40er0iteotp[r]23;[rle[wptlo34wtp[rel[1;`][l3[l[rplew[fl[`1[l[wlr[pewlr[p    |
+    | [ | \];[]fl[roeotp[ore][gper][g;rw][;g][r;eg][le]f[el]f]w[r][wper][pwtlregl]erl][;]e;][e;t[erpt][p |
+    | ] | \[]pe[3202-432o-0rkepk[1[pwplwpflerp[glep[r[er[pe[tpre][]t\][p[0-=30-323-=232[r[ept[erg[erpt]  |
+    +---+------------------------------------------------------------------------------------------------+
+    """
+
+    operators = {
+        "930pl[wer;lr[p[lwetl[erwltrewt[er;t3l.t;43.';w]er\e]e;g[er.][.rt[.e[w]r[": Right,
+        "\];[]lr[plp[r[pelpr[,gp[lsp[glr[pt,g[pr,g[lsg[plfsdgdsfpl[erlt[lwt[43[]5l4[;.tr.": Left,
+        "20ri-4;t[5;t'[y;e'teu;354y;;56;'5lu;y65l'ytyl';ry;rtly;t'yl'r;y'": Increment,
+        "];ae][flw[er.[w;r';ew.'rt;e';,erf/r;t.e'.fre.f'r;.rg;el[rw][p43p3": Decrement,
+        "][][e[w]prepf][eg]rpe[t]lre[]lgr]o320wr89`]2l1]p`l23pr2o4]2lf]2;r][32;r][2``]234;][23": Output,
+        "]\]p][l[weo[p4o40ti40er0iteotp[r]23;[rle[wptlo34wtp[rel[1;`][l3[l[rplew[fl[`1[l[wlr[pewlr[p": Input,
+        "\];[]fl[roeotp[ore][gper][g;rw][;g][r;eg][le]f[el]f]w[r][wper][pwtlregl]erl][;]e;][e;t[erpt][p": While,
+        "\[]pe[3202-432o-0rkepk[1[pwplwpflerp[glep[r[er[pe[tpre][]t\][p[0-=30-323-=232[r[ept[erg[erpt]": WhileEnd,
+    }
+
+
+class MorseFuck(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----+
+    | > | .-- |
+    | < | --. |
+    | + | ..- |
+    | - | -.. |
+    | . | -.- |
+    | , | .-. |
+    | [ | --- |
+    | ] | ... |
+    +---+-----+
+    """
+
+    operators = {
+        ".--": Right,
+        "--.": Left,
+        "..-": Increment,
+        "-..": Decrement,
+        "-.-": Output,
+        ".-.": Input,
+        "---": While,
+        "...": WhileEnd,
+    }
+
+
+class Pewlang(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----+
+    | > | pew |
+    | < | Pew |
+    | + | pEw |
+    | - | peW |
+    | . | pEW |
+    | , | PEw |
+    | [ | PeW |
+    | ] | PEW |
+    +---+-----+
+    """
+
+    operators = {
+        "pew": Right,
+        "Pew": Left,
+        "pEw": Increment,
+        "peW": Decrement,
+        "pEW": Output,
+        "PEw": Input,
+        "PeW": While,
+        "PEW": WhileEnd,
+    }
+
+
+class ReverseFuck(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+---+
+    | + | - |
+    | - | + |
+    | < | > |
+    | > | < |
+    | . | , |
+    | , | . |
+    | [ | ] |
+    | ] | [ |
+    +---+---+
+    """
+
+    operators = {
+        "-": Right,
+        "+": Left,
+        ">": Increment,
+        "<": Decrement,
+        ",": Output,
+        ".": Input,
+        "]": While,
+        "[": WhileEnd,
+    }
+
+
+class Roadrunner(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+------+
+    | > | meeP |
+    | < | Meep |
+    | + | mEEp |
+    | - | MeeP |
+    | . | MEEP |
+    | , | meep |
+    | [ | mEEP |
+    | ] | MEEp |
+    +---+------+
+    """
+
+    operators = {
+        "meeP": Right,
+        "Meep": Left,
+        "mEEp": Increment,
+        "MeeP": Decrement,
+        "MEEP": Output,
+        "meep": Input,
+        "mEEP": While,
+        "MEEp": WhileEnd,
+    }
+
+
+class Ternary(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+----+
+    | > | 01 |
+    | < | 00 |
+    | + | 11 |
+    | - | 10 |
+    | . | 20 |
+    | , | 21 |
+    | [ | 02 |
+    | ] | 12 |
+    +---+----+
+    """
+
+    operators = {
+        "01": Right,
+        "00": Left,
+        "11": Increment,
+        "10": Decrement,
+        "20": Output,
+        "21": Input,
+        "02": While,
+        "12": WhileEnd,
+    }
+
+
+class Triplet(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----+
+    | > | 001 |
+    | < | 100 |
+    | + | 111 |
+    | - | 000 |
+    | . | 010 |
+    | , | 101 |
+    | [ | 110 |
+    | ] | 011 |
+    +---+-----+
+    """
+
+    operators = {
+        "001": Right,
+        "100": Left,
+        "111": Increment,
+        "000": Decrement,
+        "010": Output,
+        "101": Input,
+        "110": While,
+        "011": WhileEnd,
+    }
+
+
+class UwU(WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, a matching:
+    +---+-----+
+    | > | OwO |
+    | < | °w° |
+    | + | UwU |
+    | - | QwQ |
+    | . | @w@ |
+    | , | >w< |
+    | [ | ~w~ |
+    | ] | ¯w¯ |
+    +---+-----+
+    """
+
+    operators = {
+        "OwO": Right,
+        "°w°": Left,
+        "UwU": Increment,
+        "QwQ": Decrement,
+        "@w@": Output,
+        ">w<": Input,
+        "~w~": While,
+        "¯w¯": WhileEnd,
     }

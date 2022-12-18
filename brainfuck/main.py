@@ -16,10 +16,12 @@ There are also 8 characters available:
 (*) taking into account nesting
 """
 
+import sys
 from pathlib import Path
 
 from runtime import RunTime
-from interpreters import Brainfuck
+from interpreters import __all__ as all_languages
+from interpreters import *
 
 
 __all__ = [
@@ -38,7 +40,22 @@ def run_program(text: str, language: str = "Brainfuck"):
 
 
 def main():
-    language = "Brainfuck"
+    """
+    Runs by default and executes the HelloWorld-script from the
+    `helloworlds` directory.
+    It has one parameter - startup language. Available languages can be
+    found in `interpreters.__all__`.
+
+    > python3 main.py Brainfuck
+    """
+
+    try:
+        language = sys.argv[1]
+    except IndexError:
+        language = "Brainfuck"
+    if language not in all_languages:
+        raise ValueError(f"unknown language <{language}>")
+
     text_path = Path(__file__).parent / "helloworlds" / language.lower()
     with open(text_path) as file:
         text = file.read()
