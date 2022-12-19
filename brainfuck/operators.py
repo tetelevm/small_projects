@@ -255,20 +255,17 @@ class Repeat(Operator):
     """
     Repeats the previous operator.
     May not work correctly with the `While` and `WhileEnd` operators.
-    It works recursively, so it may generate an error if there is too
-    much nesting.
     """
 
-    def do(self, runtime, _cursor: int = None):
-        if runtime.cursor == 0 and not _cursor:
+    def do(self, runtime):
+        cursor = runtime.cursor - 1
+        while cursor >= 0 and isinstance(runtime.operators[cursor], Repeat):
+            cursor -= 1
+
+        if cursor == -1:
             raise ValueError("no previous operator found")
 
-        cursor = (_cursor or runtime.cursor) - 1
-        previous_operator = runtime.operators[cursor]
-        if isinstance(previous_operator, Repeat):
-            previous_operator.do(runtime, cursor)
-        else:
-            previous_operator.do(runtime)
+        runtime.operators[cursor].do(runtime)
 
 
 class GiveBanana(Operator):
