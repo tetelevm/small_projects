@@ -18,6 +18,7 @@ __all__ = [
     "WhileEnd",
 
     "GiveSomeFishfood",
+    "Repeat",
     "GiveBanana",
 ]
 
@@ -151,7 +152,7 @@ class Output(Operator):
 
     @classmethod
     def is_unicode(cls, char_code: int) -> bool:
-        return 0 < char_code < cls.UNICODE_MAX
+        return 0 <= char_code < cls.UNICODE_MAX
 
     def do(self, runtime):
         char_code = runtime.tape[runtime.pointer]
@@ -248,6 +249,26 @@ class GiveSomeFishfood(Operator):
             print()
         print("*Fishfood transfer takes place* - \"Blub!\"")
         runtime._linebreak_required = False
+
+
+class Repeat(Operator):
+    """
+    Repeats the previous operator.
+    May not work correctly with the `While` and `WhileEnd` operators.
+    It works recursively, so it may generate an error if there is too
+    much nesting.
+    """
+
+    def do(self, runtime, _cursor: int = None):
+        if runtime.cursor == 0 and not _cursor:
+            raise ValueError("no previous operator found")
+
+        cursor = (_cursor or runtime.cursor) - 1
+        previous_operator = runtime.operators[cursor]
+        if isinstance(previous_operator, Repeat):
+            previous_operator.do(runtime, cursor)
+        else:
+            previous_operator.do(runtime)
 
 
 class GiveBanana(Operator):

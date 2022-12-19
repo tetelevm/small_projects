@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from typing import Type, Optional
 
@@ -22,7 +23,9 @@ __all__ = [
     "ZZZ",
 
     "Blub",
+    "Fuckfuck",
     "Ook",
+    "Pogaack",
 ]
 
 
@@ -138,7 +141,7 @@ class WithOrderedCommand(Interpreter, ABC):
     here, since some commands may include others.
     Therefore, the parsing is a bit more complicated than in the
     original.
-    That includes the original BF, more examples: EmEmFuck, zzz, Unibrain.
+    Examples: EmEmFuck, zzz, Unibrain.
     """
 
     operators: dict[str, tuple[int, Type[Operator]]]
@@ -166,6 +169,15 @@ class WithOrderedCommand(Interpreter, ABC):
 
         operators.append(End("~end~", ("", "")))
         return operators
+
+
+class CustomCommand(Interpreter, ABC):
+    """
+    A base class for interpreters that have a custom text-to-operator
+    translation.
+    Examples: Oof, Binaryfuck, Unibrain.
+    """
+    operators = {}
 
 
 # === trivial languages ================================================
@@ -623,6 +635,64 @@ class Blub(Extended, WithUniqueCommand):
     }
 
 
+class Fuckfuck(Extended, CustomCommand):
+    """
+    A language with a custom realization. It is an extension of the
+    original BrainFuck.
+    Matching:
+    +---+------+
+    | > | f**k |
+    | < | s**g |
+    | + | b**b |
+    | - | t**s |
+    | . | c**k |
+    | , | k**b |
+    | [ | a**e |
+    | ] | b**t |
+    +---+------+
+    But any letter can take the place of the `*` characters.
+    In this implementation it can only be Latin letters, numbers or
+    underscore.
+
+    Extension:
+    +---+-------------------------------+
+    | ! | Repeats the previous operator |
+    +---+-------------------------------+
+    """
+
+    operator_symbs = {
+        "fk": Right,
+        "sg": Left,
+        "bb": Increment,
+        "ts": Decrement,
+        "ck": Output,
+        "kb": Input,
+        "ae": While,
+        "bt": WhileEnd,
+    }
+
+    def translate(self) -> list[Operator]:
+        pattern = "(!)|" + "|".join(
+            fr"({f}\w\w{s})"
+            for (f, s) in self.operator_symbs.keys()
+        )
+
+        operators = []
+        for res in re.finditer(pattern, self.text):
+            name = res.group()
+            operator_class = (
+                self.operator_symbs[name[0] + name[-1]]
+                if name != "!" else
+                Repeat
+            )
+
+            error_info = self.make_error_info(*res.span())
+            operators.append(operator_class(name, error_info))
+
+        operators.append(End("~end~", ("", "")))
+        return operators
+
+
 class Ook(Extended, WithUniqueCommand):
     """
     A translation of BrainFuck with a small addition.
@@ -656,17 +726,39 @@ class Ook(Extended, WithUniqueCommand):
     }
 
 
+class Pogaack(Extended, WithUniqueCommand):
+    """
+    A language with a custom realization. It is an extension of the
+    original BrainFuck.
+    Matching:
+    +---+-----------+
+    | > | pogack!   |
+    | < | pogaack!  |
+    | + | pogaaack! |
+    | - | poock!    |
+    | . | pogaaack? |
+    | , | poock?    |
+    | [ | pogack?   |
+    | ] | pogaack?  |
+    +---+-----------+
+    But any letter can take the place of the `*` characters.
+    In this implementation it can only be Latin letters, numbers or
+    underscore.
 
+    Extension:
+    +-------+-------------------------------+
+    | pock! | Repeats the previous operator |
+    +-------+-------------------------------+
+    """
 
-
-
-
-
-
-
-
-
-
-
-
-
+    operators = {
+        "pogack!": Right,
+        "pogaack!": Left,
+        "pogaaack!": Increment,
+        "poock!": Decrement,
+        "pogaaack?": Output,
+        "poock?": Input,
+        "pogack?": While,
+        "pogaack?": WhileEnd,
+        "pock!": Repeat,
+    }
