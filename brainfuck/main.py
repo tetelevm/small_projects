@@ -18,9 +18,9 @@ There are also 8 characters available:
 
 import sys
 from pathlib import Path
+from typing import Type
 
-from runtime import RunTime
-from interpreters import __all__ as all_languages
+from interpreters import Interpreter, __all__ as all_languages
 from interpreters import *
 
 
@@ -34,9 +34,9 @@ def run_program(text: str, language: str = "Brainfuck"):
     Runs the program text with a specific program language.
     """
 
-    interpreter = globals()[language]
+    interpreter: Type[Interpreter] = globals()[language]
     translated_program = interpreter(text).translate()
-    RunTime(translated_program).execute()
+    translated_program.run()
 
 
 def main():

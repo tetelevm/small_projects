@@ -1,11 +1,14 @@
+from dataclasses import dataclass
 from typing import Final
 
+from exeptions import ExecutionError
 
 __all__ = [
     "Config",
 ]
 
 
+@dataclass
 class Config:
     """
     A class that contains all the run parameters and some useful
@@ -32,11 +35,21 @@ class Config:
 
     # ======
 
-    maximum: Final[int] = MAX_NUMBER - 1
-    minimum: Final[int] = -MAX_NUMBER if HAS_MINUS else 0
+    # After class initialization, parameters cannot be changed
+    __is_init: bool = False
 
-    @classmethod
-    def check_on_max_value(cls, number: int) -> int:
+    def __setattr__(self, key, value):
+        if self.__is_init:
+            raise ValueError("Nothing can be changed after initialization")
+        super().__setattr__(key, value)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.maximum: Final[int] = self.MAX_NUMBER - 1
+        self.minimum: Final[int] = -self.MAX_NUMBER if self.HAS_MINUS else 0
+        self.__is_init = True
+
+    def check_on_max_value(self, number: int) -> int:
         """
         Returns a number reduced to the cell size.
         If the number does not fit and the overflow is off, an error is
@@ -44,38 +57,37 @@ class Config:
         Checking from the top side.
         """
 
-        if number <= cls.maximum:
+        if number <= self.maximum:
             return number
 
-        if not cls.HAS_OVERLOAD:
+        if not self.HAS_OVERLOAD:
             msg = "value is greater than maximum ({value} > {maximum})".format(
                 value=number,
-                maximum=cls.MAX_NUMBER
+                maximum=self.MAX_NUMBER
             )
-            raise ValueError(msg)
+            raise ExecutionError(msg)
 
-        if not cls.HAS_MINUS:
-            return number % cls.MAX_NUMBER
-        return cls.minimum + (number - cls.MAX_NUMBER) % (cls.MAX_NUMBER*2)
+        if not self.HAS_MINUS:
+            return number % self.MAX_NUMBER
+        return self.minimum + (number - self.MAX_NUMBER) % (self.MAX_NUMBER*2)
 
-    @classmethod
-    def check_on_min_value(cls, number: int) -> int:
+    def check_on_min_value(self, number: int) -> int:
         """
         Returns a number reduced to the cell size.
         If the number does not fit and the overflow is off, an error is
         raised.
         Checking from the underside.
         """
-        if number >= Config.minimum:
+        if number >= self.minimum:
             return number
 
-        if not Config.HAS_OVERLOAD:
+        if not self.HAS_OVERLOAD:
             msg = "value is less than minimum ({value} < {minimum})".format(
                 value=number,
-                minimum=Config.minimum
+                minimum=self.minimum
             )
-            raise ValueError(msg)
+            raise ExecutionError(msg)
 
-        if not cls.HAS_MINUS:
-            return number % cls.MAX_NUMBER
-        return cls.minimum + (number - cls.MAX_NUMBER) % (cls.MAX_NUMBER * 2)
+        if not self.HAS_MINUS:
+            return number % self.MAX_NUMBER
+        return self.minimum + (number - self.MAX_NUMBER) % (self.MAX_NUMBER * 2)

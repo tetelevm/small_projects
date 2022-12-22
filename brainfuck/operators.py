@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Protocol
 
-from config import Config
+from exeptions import ExecutionError
+from program import Program
 
 
 __all__ = [
     "Operator",
+    "Start",
     "End",
 
     "Right",
@@ -26,20 +27,6 @@ __all__ = [
 # === system classes ===================================================
 
 
-class _Runtime(Protocol):
-    """
-    Runtime interface. Similar to the `Runtime` class.
-    """
-
-    tape: list[int]
-    pointer: int
-    cursor: int
-    is_running: bool
-    operators: list
-
-    _linebreak_required: bool
-
-
 class Operator(ABC):
     """
     Operator base class.
@@ -48,14 +35,25 @@ class Operator(ABC):
     Contains name and position to output program errors.
     """
 
-    error_info: tuple[str, str]
+    name: str
+    position: tuple[int, int]
 
-    def __init__(self, name: str, error_info: tuple[str, str]):
+    def __init__(self, name: str, position: tuple[int, int]):
         self.name = name
-        self.error_info = error_info
+        self.position = position
 
     @abstractmethod
-    def do(self, runtime: _Runtime):
+    def do(self, program: Program):
+        pass
+
+
+class Start(Operator):
+    """
+    A system operator indicating that this is the beginning of the
+    program.
+    """
+
+    def do(self, program):
         pass
 
 
@@ -66,8 +64,8 @@ class End(Operator):
     operator - added to the end of the program to finish it.
     """
 
-    def do(self, runtime):
-        runtime.is_running = False
+    def do(self, program):
+        program.runtime.is_running = False
 
 
 # === original operators ===============================================
@@ -80,17 +78,19 @@ class Right(Operator):
     is looped, else it triggers an error.
     """
 
-    def do(self, runtime):
-        runtime.pointer += 1
-        if runtime.pointer >= Config.TAPE_LEN:
-            if Config.IS_LOOPED:
-                runtime.pointer = 0
-            else:
-                msg = "tape pointer out of range ({pointer} > {size})".format(
-                    pointer=runtime.pointer,
-                    size=Config.TAPE_LEN - 1
-                )
-                raise ValueError(msg)
+    def do(self, program):
+        program.runtime.pointer += 1
+        if program.runtime.pointer < program.config.TAPE_LEN:
+            return
+
+        if program.config.IS_LOOPED:
+            program.runtime.pointer = 0
+
+        msg = "tape pointer out of range ({pointer} > {size})".format(
+            pointer=program.runtime.pointer,
+            size=program.config.TAPE_LEN - 1
+        )
+        raise ExecutionError(msg)
 
 
 class Left(Operator):
@@ -100,14 +100,16 @@ class Left(Operator):
     element if the tape is looped, else it generates an error.
     """
 
-    def do(self, runtime):
-        runtime.pointer -= 1
-        if runtime.pointer < 0:
-            if Config.IS_LOOPED:
-                runtime.pointer = Config.TAPE_LEN - 1
-            else:
-                msg = f"tape pointer out of range ({runtime.pointer} < 0)"
-                raise ValueError(msg)
+    def do(self, program):
+        program.runtime.pointer -= 1
+        if program.runtime.pointer >= 0:
+            return
+
+        if program.config.IS_LOOPED:
+            program.runtime.pointer = program.config.TAPE_LEN - 1
+
+        msg = f"tape pointer out of range ({program.runtime.pointer} < 0)"
+        raise ExecutionError(msg)
 
 
 class Increment(Operator):
@@ -117,9 +119,10 @@ class Increment(Operator):
     overflow, it either executes it (if necessary) or generates an error.
     """
 
-    def do(self, runtime):
-        new_val = runtime.tape[runtime.pointer] + 1
-        runtime.tape[runtime.pointer] = Config.check_on_max_value(new_val)
+    def do(self, program):
+        new_val = program.runtime.current_val + 1
+        overflowed_val = program.config.check_on_max_value(new_val)
+        program.runtime.current_val = overflowed_val
 
 
 class Decrement(Operator):
@@ -129,17 +132,10 @@ class Decrement(Operator):
     overflow, it either executes it (if necessary) or generates an error.
     """
 
-    def do(self, runtime):
-        runtime.tape[runtime.pointer] -= 1
-        if runtime.tape[runtime.pointer] < Config.minimum:
-            if Config.HAS_OVERLOAD:
-                runtime.tape[runtime.pointer] = Config.maximum
-            else:
-                msg = "value is less than minimum ({value} < {minimum})".format(
-                    value=runtime.tape[runtime.pointer],
-                    minimum=Config.minimum
-                )
-                raise ValueError(msg)
+    def do(self, program):
+        new_val = program.runtime.current_val - 1
+        overflowed_val = program.config.check_on_min_value(new_val)
+        program.runtime.current_val = overflowed_val
 
 
 class Output(Operator):
@@ -154,16 +150,16 @@ class Output(Operator):
     def is_unicode(cls, char_code: int) -> bool:
         return 0 <= char_code < cls.UNICODE_MAX
 
-    def do(self, runtime):
-        char_code = runtime.tape[runtime.pointer]
+    def do(self, program):
+        char_code = program.runtime.current_val
         if not self.is_unicode(char_code):
             msg = "value is out of range of unicode ({value} <> [0:{max}])".format(
                 value=char_code,
                 max=self.UNICODE_MAX
             )
-            raise ValueError(msg)
+            raise ExecutionError(msg)
         print(chr(char_code), end="")
-        runtime._linebreak_required = char_code != 10  # not "\n"
+        program.runtime._linebreak_required = char_code != 10  # not "\n"
 
 
 class Input(Operator):
@@ -173,11 +169,12 @@ class Input(Operator):
     used.
     """
 
-    def do(self, runtime):
+    def do(self, program):
         char = input("> ")  # TODO: ctrl-c
         char = char.lstrip(" ")[:1]
         char_code = ord(char or "\n")
-        runtime.tape[runtime.pointer] = Config.check_on_max_value(char_code)
+        code = program.config.check_on_max_value(char_code)
+        program.runtime.current_val = code
 
 
 class While(Operator):
@@ -189,23 +186,27 @@ class While(Operator):
     if the end of the program is found during the search, it is stopped.
     """
 
-    def do(self, runtime):
-        if not runtime.tape[runtime.pointer]:
-            nesting = 0
-            while True:
-                operator = runtime.operators[runtime.cursor]
-                if isinstance(operator, While):
-                    nesting += 1
-                elif isinstance(operator, WhileEnd):
-                    nesting -= 1
+    def do(self, program):
+        if program.runtime.current_val:
+            return
 
-                if nesting == 0:
-                    break
-                elif isinstance(operator, End):
-                    runtime.cursor -= 1
-                    break
+        cursor = program.runtime.cursor
+        nesting = 0
+        while True:
+            operator = program.runtime.operator
+            if isinstance(operator, While):
+                nesting += 1
+            elif isinstance(operator, WhileEnd):
+                nesting -= 1
 
-                runtime.cursor += 1
+            if nesting == 0:
+                break
+            elif isinstance(operator, End):
+                program.runtime.cursor -= 1
+                break
+            cursor += 1
+
+        program.runtime.cursor = cursor
 
 
 class WhileEnd(Operator):
@@ -218,22 +219,26 @@ class WhileEnd(Operator):
     the search, an error is called.
     """
 
-    def do(self, runtime):
-        if runtime.tape[runtime.pointer]:
-            nesting = 0
-            while True:
-                operator = runtime.operators[runtime.cursor]
-                if isinstance(operator, WhileEnd):
-                    nesting += 1
-                elif isinstance(operator, While):
-                    nesting -= 1
+    def do(self, program):
+        if not program.runtime.current_val:
+            return
 
-                if nesting == 0:
-                    break
-                elif runtime.cursor == 0:
-                    raise ValueError("unexpected end of loop")
+        cursor = program.runtime.cursor
+        nesting = 0
+        while True:
+            operator = program.operators[cursor]
+            if isinstance(operator, WhileEnd):
+                nesting += 1
+            elif isinstance(operator, While):
+                nesting -= 1
 
-                runtime.cursor -= 1
+            if nesting == 0:
+                break
+            elif isinstance(operator, Start):
+                raise ExecutionError("unexpected end of loop")
+            cursor -= 1
+
+        program.runtime.cursor = cursor
 
 
 # === extended operators ===============================================
@@ -244,11 +249,10 @@ class GiveSomeFishfood(Operator):
     The joking operator from the Blub language.
     """
 
-    def do(self, runtime):
-        if runtime._linebreak_required:
-            print()
+    def do(self, program):
+        program._break_line()
         print("*Fishfood transfer takes place* - \"Blub!\"")
-        runtime._linebreak_required = False
+        program.runtime._linebreak_required = False
 
 
 class Repeat(Operator):
@@ -257,15 +261,15 @@ class Repeat(Operator):
     May not work correctly with the `While` and `WhileEnd` operators.
     """
 
-    def do(self, runtime):
-        cursor = runtime.cursor - 1
-        while cursor >= 0 and isinstance(runtime.operators[cursor], Repeat):
+    def do(self, program):
+        cursor = program.runtime.cursor - 1
+        while cursor >= 0 and isinstance(program.operators[cursor], Repeat):
             cursor -= 1
 
-        if cursor == -1:
-            raise ValueError("no previous operator found")
+        if isinstance(program.operators[cursor], Start):
+            raise ExecutionError("no previous operator found")
 
-        runtime.operators[cursor].do(runtime)
+        program.operators[cursor].do(program)
 
 
 class GiveBanana(Operator):
@@ -273,16 +277,7 @@ class GiveBanana(Operator):
     The joking operator from the Ook language.
     """
 
-    def do(self, runtime):
-        if runtime._linebreak_required:
-            print()
+    def do(self, program):
+        program._break_line()
         print("*Banana transfer takes place* - \"Ook!\"")
-        runtime._linebreak_required = False
-
-
-
-
-
-
-
-
+        program.runtime._linebreak_required = False

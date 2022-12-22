@@ -3,11 +3,13 @@ from abc import ABC, abstractmethod
 from typing import Type, Optional
 
 from operators import *
+from program import Program
 
 
 __all__ = [
     "Brainfuck",
     "Alphuck",
+    "Binaryfuck",
     "BrainSymbol",
     "EmEmFuck",
     "German",
@@ -37,6 +39,8 @@ class Interpreter(ABC):
     Interpreter base class.
     Interpreters translate text code into an inner representation (a
     list of `Operator` objects), ready to be executed.
+    The main method is `.translate()`, which returns a ready-to-execute
+    program.
     """
 
     text: str
@@ -46,40 +50,22 @@ class Interpreter(ABC):
         self.text = text
 
     @abstractmethod
-    def translate(self) -> list[Operator]:
+    def parse_text(self, text: str) -> list[Operator]:
         pass
 
-    def make_error_info(self, start: int, end: int) -> tuple[str, str]:
+    def translate(self) -> Program:
         """
-        Returns the context of the operator and its selection in the
-        context.
-        The context is the operator itself and some characters to the
-        right and left. Operators that are too large are minimized,
-        indentation is cut to the end of the lines. Underscores are done
-        in the same way as in Python.
-
-        Example:
-        |   some text        OperatorWi...ryLongName           some text|
-        |                    ^^^^^^^^^^^^^^^^^^^^^^^                    |
+        Parses the program text and does the system actions that parsing
+        requires.
+        Returns the program ready for execution.
         """
 
-        operator_text = self.text[start:end]
-        if len(operator_text) > 30:
-            operator_text = operator_text[:10] + "..." + operator_text[-10:]
-
-        indent = 20
-
-        previous = self.text[max(start - indent, 0):start]
-        if (ind := previous.rfind("\n")) >= 0:
-            previous = previous[ind+1:]
-
-        subsequent = self.text[end:end+indent]
-        if (ind := subsequent.find("\n")) >= 0:
-            subsequent = subsequent[:ind]
-
-        context = previous + operator_text + subsequent
-        underline = " "*len(previous) + "^"*len(operator_text) + " "*len(subsequent)
-        return context, underline
+        operators = [
+            Start("~start~", (0, 0)),
+            *self.parse_text(self.text),
+            End("~end~", (0, 0))
+        ]
+        return Program(self.text, operators)
 
 
 class Trivial(Interpreter, ABC):
@@ -110,19 +96,18 @@ class WithUniqueCommand(Interpreter, ABC):
 
     operators: dict[str, Type[Operator]]
 
-    def translate(self) -> list[Operator]:
+    def parse_text(self, text) -> list[Operator]:
         operator_names = self.operators.keys()
 
         cursor = 0
         operators = []
-        while cursor <= len(self.text):
+        while cursor <= len(text):
             for name in operator_names:
-                if not self.text[cursor:].startswith(name):
+                if not text[cursor:].startswith(name):
                     continue
 
                 operator_class = self.operators[name]
-                error_info = self.make_error_info(cursor, cursor+len(name))
-                operator = operator_class(name, error_info)
+                operator = operator_class(name, (cursor, cursor+len(name)))
 
                 operators.append(operator)
                 cursor += len(name)
@@ -130,7 +115,6 @@ class WithUniqueCommand(Interpreter, ABC):
             else:
                 cursor += 1
 
-        operators.append(End("~end~", ("", "")))
         return operators
 
 
@@ -146,7 +130,7 @@ class WithOrderedCommand(Interpreter, ABC):
 
     operators: dict[str, tuple[int, Type[Operator]]]
 
-    def translate(self) -> list[Operator]:
+    def parse_text(self, text) -> list[Operator]:
         sorted_operators = sorted(self.operators.items(), key=lambda item: item[1][0])
         operator_names = [item[0] for item in sorted_operators]
 
@@ -158,8 +142,7 @@ class WithOrderedCommand(Interpreter, ABC):
                     continue
 
                 operator_class = self.operators[name][1]
-                error_info = self.make_error_info(cursor, cursor+len(name))
-                operator = operator_class(name, error_info)
+                operator = operator_class(name, (cursor, cursor+len(name)))
 
                 operators.append(operator)
                 cursor += len(name)
@@ -167,7 +150,6 @@ class WithOrderedCommand(Interpreter, ABC):
             else:
                 cursor += 1
 
-        operators.append(End("~end~", ("", "")))
         return operators
 
 
@@ -671,7 +653,7 @@ class Fuckfuck(Extended, CustomCommand):
         "bt": WhileEnd,
     }
 
-    def translate(self) -> list[Operator]:
+    def parse_text(self, text) -> list[Operator]:
         pattern = "(!)|" + "|".join(
             fr"({f}\w\w{s})"
             for (f, s) in self.operator_symbs.keys()
@@ -686,10 +668,8 @@ class Fuckfuck(Extended, CustomCommand):
                 Repeat
             )
 
-            error_info = self.make_error_info(*res.span())
-            operators.append(operator_class(name, error_info))
+            operators.append(operator_class(name, res.span()))
 
-        operators.append(End("~end~", ("", "")))
         return operators
 
 
