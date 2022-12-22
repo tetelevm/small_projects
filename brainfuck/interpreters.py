@@ -13,6 +13,7 @@ __all__ = [
     "BrainSymbol",
     "EmEmFuck",
     "German",
+    "Headsecks",
     "MessyScript",
     "MorseFuck",
     "Pewlang",
@@ -22,6 +23,7 @@ __all__ = [
     "Triplet",
     "UwU",
     "WholesomeFuck",
+    "Wordfuck",
     "ZZZ",
 
     "Blub",
@@ -348,6 +350,46 @@ class German(Trivial, WithUniqueCommand):
     }
 
 
+class Headsecks(Trivial, CustomCommand):
+    """
+    A trivial BrainFuck translation. The specific character is that all
+    symbols, or rather their code, are used as operators. The operator
+    is chosen depending on the remainder of the division of the code by
+    `8` (the number of operators).
+    Matching:
+    +---+---+
+    | > | 3 |
+    | < | 2 |
+    | + | 0 |
+    | - | 1 |
+    | . | 4 |
+    | , | 5 |
+    | [ | 6 |
+    | ] | 7 |
+    +---+---+
+    """
+
+    operator_remainder = {
+        3: Right,
+        2: Left,
+        0: Increment,
+        1: Decrement,
+        4: Output,
+        5: Input,
+        6: While,
+        7: WhileEnd,
+    }
+
+    def parse_text(self, text):
+        operators = []
+        for cursor in range(len(text)):
+            char = text[cursor]
+            operator_class = self.operator_remainder[ord(char) % 8]
+            operator = operator_class(char, (cursor, cursor+1))
+            operators.append(operator)
+        return operators
+
+
 class MessyScript(Trivial, WithUniqueCommand):
     """
     A simple translation of BrainFuck, a matching:
@@ -591,6 +633,59 @@ class WholesomeFuck(Trivial, WithOrderedCommand):
     }
 
 
+class Wordfuck(Trivial, CustomCommand):
+    """
+    A trivial translation of BrainFuck. The specific characteristic is
+    that any words are used as operators. The length of the word is used
+    as a unique element.
+    Space and line break are used as a separator, other characters are
+    counted as part of the word. Words shorter than 2 or longer than 9
+    characters are ignored.
+    Matching:
+    +---+---+
+    | > | 6 |
+    | < | 7 |
+    | + | 4 |
+    | - | 3 |
+    | . | 2 |
+    | , | 5 |
+    | [ | 8 |
+    | ] | 9 |
+    +---+---+
+    """
+
+    operator_remainder = {
+        6: Right,
+        7: Left,
+        4: Increment,
+        3: Decrement,
+        2: Output,
+        5: Input,
+        8: While,
+        9: WhileEnd,
+    }
+
+    def parse_text(self, text):
+        text = text.replace("\n", " ")
+
+        operators = []
+        cursor = 0
+        while cursor < len(text):
+            next_space = text.find(" ", cursor)
+            if next_space == -1:
+                next_space = len(text)
+
+            word_len = next_space - cursor
+            if 1 < word_len <= 9:
+                word = text[cursor:next_space]
+                operator_class = self.operator_remainder[word_len]
+                operator = operator_class(word, (cursor, next_space))
+                operators.append(operator)
+            cursor += word_len + 1
+
+        return operators
+
+
 class ZZZ(Trivial, WithOrderedCommand):
     """
     A simple translation of BrainFuck, a matching:
@@ -690,7 +785,7 @@ class Fuckfuck(Extended, CustomCommand):
         "bt": WhileEnd,
     }
 
-    def parse_text(self, text) -> list[Operator]:
+    def parse_text(self, text):
         pattern = "(!)|" + "|".join(
             fr"({f}\w\w{s})"
             for (f, s) in self.operator_symbs.keys()

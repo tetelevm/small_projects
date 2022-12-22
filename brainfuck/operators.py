@@ -85,6 +85,7 @@ class Right(Operator):
 
         if program.config.IS_LOOPED:
             program.runtime.pointer = 0
+            return
 
         msg = "tape pointer out of range ({pointer} > {size})".format(
             pointer=program.runtime.pointer,
@@ -107,6 +108,7 @@ class Left(Operator):
 
         if program.config.IS_LOOPED:
             program.runtime.pointer = program.config.TAPE_LEN - 1
+            return
 
         msg = f"tape pointer out of range ({program.runtime.pointer} < 0)"
         raise ExecutionError(msg)
