@@ -9,7 +9,7 @@ from program import Program
 __all__ = [
     "Brainfuck",
     "Alphuck",
-    "Binaryfuck",
+    "BinaryFuck",
     "BrainSymbol",
     "EmEmFuck",
     "German",
@@ -227,6 +227,43 @@ class Alphuck(Trivial, WithUniqueCommand):
         "p": While,
         "s": WhileEnd,
     }
+
+
+class BinaryFuck(Trivial, WithUniqueCommand):
+    """
+    This language is a trivial translation of BrainFuck, but with the `1`
+    symbol at the beginning of the text.
+    Matching:
+    +---+-----+
+    | > | 010 |
+    | < | 011 |
+    | + | 000 |
+    | - | 001 |
+    | . | 100 |
+    | , | 101 |
+    | [ | 110 |
+    | ] | 111 |
+    +---+-----+
+    """
+
+    operators = {
+        "010": Right,
+        "011": Left,
+        "000": Increment,
+        "001": Decrement,
+        "100": Output,
+        "101": Input,
+        "110": While,
+        "111": WhileEnd,
+    }
+
+    def parse_text(self, text) -> list[Operator]:
+        text = text[1:]  # remove the first `1`
+        operators = super().parse_text(text)
+        for operator in operators:
+            # consider the first `1`
+            operator.position = (operator.position[0] + 1, operator.position[1] + 1)
+        return operators
 
 
 class BrainSymbol(Trivial, WithUniqueCommand):
