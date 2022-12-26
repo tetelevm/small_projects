@@ -8,6 +8,7 @@ from program import Program
 
 __all__ = [
     "Brainfuck",
+
     "Alphuck",
     "BinaryFuck",
     "BrainSymbol",
@@ -16,6 +17,7 @@ __all__ = [
     "Headsecks",
     "MessyScript",
     "MorseFuck",
+    "Oof",
     "Pewlang",
     "ReverseFuck",
     "Roadrunner",
@@ -442,6 +444,57 @@ class MorseFuck(Trivial, WithUniqueCommand):
         "---": While,
         "...": WhileEnd,
     }
+
+
+class Oof(Trivial, CustomCommand):
+    """
+    A trivial BrainFuck translation.
+    The specifics are in the description of the operators:
+    the operator is a word of the form `oo...of` (several `o` and at the
+    end `f`), the type of operator is taken by the formula
+    `count("o") % 8 + 1`
+    and the number of repeats
+    `count("o") // 8`.
+    Matching:
+    +---+---+
+    | > | 1 |
+    | < | 2 |
+    | + | 3 |
+    | - | 4 |
+    | . | 5 |
+    | , | 6 |
+    | [ | 7 |
+    | ] | 8 |
+    +---+---+
+    """
+
+    operator_remainder: dict[int, tuple[type[Operator], str]] = {
+        1: (Right, "f"),
+        2: (Left, "of"),
+        3: (Increment, "oof"),
+        4: (Decrement, "ooof"),
+        5: (Output, "oooof"),
+        6: (Input, "ooooof"),
+        7: (While, "oooooof"),
+        8: (WhileEnd, "ooooooof"),
+    }
+
+    def parse_text(self, text):
+        pattern = r"[o]{1,}f"
+
+        operators = []
+        for mat in re.finditer(pattern, text):
+            operator_group = mat.group()
+            operator_kind = (len(operator_group) - 1) % 8 + 1
+            operator_type, name = self.operator_remainder[operator_kind]
+            count = (len(operator_group) - 1) // 8
+
+            for operator_num in range(count):
+                start = mat.start() + operator_num * 8
+                operator = operator_type(name, (start, start+8))
+                operators.append(operator)
+
+        return operators
 
 
 class Pewlang(Trivial, WithUniqueCommand):
