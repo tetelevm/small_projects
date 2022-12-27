@@ -9,6 +9,7 @@ from program import Program
 __all__ = [
     "Brainfuck",
 
+    "AAA",
     "Alphuck",
     "BinaryFuck",
     "BrainSymbol",
@@ -23,6 +24,7 @@ __all__ = [
     "Roadrunner",
     "Ternary",
     "Triplet",
+    "Unibrain",
     "UwU",
     "WholesomeFuck",
     "Wordfuck",
@@ -204,6 +206,115 @@ class Brainfuck(Trivial, WithUniqueCommand):
         "[": While,
         "]": WhileEnd,
     }
+
+
+class AAA(Trivial, WithUniqueCommand):
+    """
+    A simple translation of BrainFuck, with the additional condition that
+    everything inside the brackets is a comment:
+    `AAAA ( AAaa AAAA) aaaa`
+     ++++   ---- ----  ++++
+
+    Matching:
+    +---+------+
+    | > | aAaA |
+    | < | AAaa |
+    | + | AAAA |
+    | - | AaAa |
+    | . | aAaa |
+    | , | aaaa |
+    | [ | aaAA |
+    | ] | aaaA |
+    +---+------+
+
+    Small extension:
+    +--------+-----------------------------------+
+    | (smth) |  All inside brackets are comments |
+    +--------+-----------------------------------+
+    This version supports parentheses nesting:
+    `AAAA (AAAA (AAAA))`
+     ++++  ----  ----
+    """
+
+    operators = {
+        "aAaA": Right,
+        "AAaa": Left,
+        "AAAA": Increment,
+        "AaAa": Decrement,
+        "aAaa": Output,
+        "aaaa": Input,
+        "aaAA": While,
+        "aaaA": WhileEnd,
+    }
+
+    RANGE = tuple[int, int]
+
+    def get_comment_ranges(self, text: str) -> list[RANGE]:
+        """
+        Searches all open-close bracket (comment) ranges in the text.
+        If a parenthesis is opened multiple times, it is expected to be
+        closed multiple times (nesting is supported).
+        If a parenthesis is not closed until the end of the text, the
+        comment continues until the end.
+
+        `smth smth ( smth ( smth ) smth ) smth smth )  smth ( smthsmth`
+                   ######################                   ##########
+        """
+
+        nesting = 0
+        start = -1
+        ranges = []
+        for (num, char) in enumerate(text):
+            if char == "(":
+                nesting += 1
+                if nesting == 1:
+                    # start of comment
+                    start = num
+
+            if char == ")":
+                nesting -= 1
+                if nesting < 0:
+                    # single bracket, not a comment
+                    nesting = 0
+                    continue
+                elif nesting == 0:
+                    # end of comment
+                    ranges.append((start, num))
+                    start = -1
+
+        if start != -1:
+            # comment continues until the end of the text
+            ranges.append((start, len(text)))
+
+        return ranges
+
+    def is_not_comment(self, operator: Operator, ranges: list[RANGE]) -> bool:
+        """
+        Checks whether the operator is written inside or outside the
+        comments. Ranges are expected to be non-overlapping and sorted
+        in ascending order.
+        """
+
+        # it can be modified into a binary search
+        for range_ in ranges:
+            if range_[1] < operator.position[0]:
+                continue
+            if range_[0] > operator.position[1]:
+                break
+            return False
+
+        return True
+
+    def parse_text(self, text):
+        all_operators = super().parse_text(text)
+        comment_ranges = self.get_comment_ranges(text)
+
+        operators = []
+        for operator in all_operators:
+            if self.is_not_comment(operator, comment_ranges):
+                operators.append(operator)
+
+        return operators
 
 
 class Alphuck(Trivial, WithUniqueCommand):
@@ -630,6 +741,74 @@ class Triplet(Trivial, WithUniqueCommand):
         "110": While,
         "011": WhileEnd,
     }
+
+
+class Unibrain(Trivial, CustomCommand):
+    """
+    A trivial BrainFuck translation.
+    The specificity is that the operator is a single word. The word is
+    not any concrete word, it can be any word, but it must consist of
+    repeating parts (`QweQwe`, `XXX`, `O_oO_oO_oO_o`). The number of
+    repetitions is how it affects the choice of operator.
+    If a word can be divided by more than one way (`++++` < 1, 2, 4),
+    the highest number is used.
+    Matching:
+    +---+---+
+    | > | 1 |
+    | < | 2 |
+    | + | 3 |
+    | - | 4 |
+    | . | 5 |
+    | , | 6 |
+    | [ | 7 |
+    | ] | 8 |
+    +---+---+
+    """
+
+    operator_remainder = {
+        1: Right,
+        2: Left,
+        3: Increment,
+        4: Decrement,
+        5: Output,
+        6: Input,
+        7: While,
+        8: WhileEnd,
+    }
+
+    def get_portion(self, word: str, portion: int) -> str:
+        return word[:len(word) // portion]
+
+    def find_repetitions_count(self, word: str) -> int:
+        for portion in range(8, 0, -1):
+            if (
+                    len(word) % portion == 0
+                    and self.get_portion(word, portion) * portion == word
+            ):
+                return portion
+
+    def parse_text(self, text):
+        # very similar to `Wordfuck`
+
+        text = text.replace("\n", " ")
+
+        operators = []
+        cursor = 0
+        while cursor < len(text):
+            next_space = text.find(" ", cursor)
+            if next_space == -1:
+                next_space = len(text)
+
+            word = text[cursor:next_space]
+            repetitions_count = self.find_repetitions_count(word)
+
+            operator_class = self.operator_remainder[repetitions_count]
+            operator = operator_class(word, (cursor, next_space))
+            operators.append(operator)
+
+            cursor += (next_space - cursor) + 1
+
+        return operators
 
 
 class UwU(Trivial, WithUniqueCommand):
