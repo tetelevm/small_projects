@@ -32,6 +32,7 @@ class RunTime:
     pointer: int
     cursor: int
     is_running: bool
+    params: dict
 
     _linebreak_required: bool
 
@@ -42,6 +43,7 @@ class RunTime:
         self.pointer = 0
         self.tape: list[int] = [0] * Config.TAPE_LEN
         self.is_running = True
+        self.params = dict()
 
         self._linebreak_required = False
 

@@ -21,6 +21,7 @@ __all__ = [
     "GiveSomeFishfood",
     "Repeat",
     "GiveBanana",
+    "InputOutput",
 ]
 
 
@@ -283,3 +284,20 @@ class GiveBanana(Operator):
         program._break_line()
         print("*Banana transfer takes place* - \"Ook!\"")
         program.runtime._linebreak_required = False
+
+
+class InputOutput(Operator):
+    """
+    Works as standard input and output operators depending on the value
+    of the current cell - if the value is 0, then as input, otherwise as
+    output.
+    """
+
+    _input = Input("-", (0, 0))
+    _output = Output("-", (0, 0))
+
+    def do(self, program):
+        if program.runtime.current_val:
+            self._output.do(program)
+        else:
+            self._input.do(program)

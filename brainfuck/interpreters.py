@@ -34,6 +34,10 @@ __all__ = [
     "Fuckfuck",
     "Ook",
     "Pogaack",
+
+    "Braincrash",
+    "PocketBF",
+    "InstructionPointerBF",
 ]
 
 
@@ -89,6 +93,14 @@ class Extended(Interpreter, ABC):
     with BrainFuck*, but has some extension on top of it.
 
     * - by operator logic, not by specific writing
+    """
+
+
+class Revision(Interpreter, ABC):
+    """
+    A class-label that shows that the language is not backward-compatible
+    with the original BrainFuck, but is either a complication or a
+    similar language inspired by BrainFuck.
     """
 
 
@@ -1106,3 +1118,124 @@ class Pogaack(Extended, WithUniqueCommand):
         "pogaack?": WhileEnd,
         "pock!": Repeat,
     }
+
+
+# === revision languages ===============================================
+
+
+class Braincrash(Revision, CustomCommand):
+    """
+    The language reduces BrainFuck to a certain minimalism.
+    The commands of the original BrainFuck are stored as order `+-><.,[]`.
+    There is a pointer to the command, it takes values 0-7, at value 8
+    it is reset to zero.
+    This language has two operators:
+    +---------+---------------------------------------------------------------+
+    | ~space~ | increments the pointer by 1                                   |
+    |    !    | executes the command under the pointer and increments it by 1 |
+    +---------+---------------------------------------------------------------+
+
+    Because of problems with loops, the program does not use these two
+    operators, but rather a ready translated program.
+    """
+
+    commands_order = [
+        Increment,
+        Decrement,
+        Right,
+        Left,
+        Output,
+        Input,
+        While,
+        WhileEnd,
+    ]
+
+    def parse_text(self, text):
+        operators = []
+
+        c_pointer = 0
+        for (num, char) in enumerate(text):
+            if char == " ":
+                c_pointer = (c_pointer + 1) % 8
+            elif char == "!":
+                operator_type = self.commands_order[c_pointer]
+                operators.append(operator_type("!", (num, num+1)))
+                c_pointer = (c_pointer + 1) % 8
+
+        return operators
+
+
+class PocketBF(Revision, CustomCommand):
+    """
+    A complication of the original BF.
+    The program has a direction for selecting operators, as well as 5
+    operators themselves:
+
+    +---+-----------------------------------------------------------------------+
+    | = | reverses direction                                                    |
+    | + | increment/decrement the current cell (depending on the direction)     |
+    | > | move the cell pointer to the right/left (depending on the direction)  |
+    | | | cycle start/end (depending on the direction)                          |
+    | ; | if the value in the cell is 0, it works as input, otherwise as output |
+    +---+-----------------------------------------------------------------------+
+    """
+
+    commands = {
+        "+": [None, Increment, Decrement],
+        ">": [None, Right, Left],
+        "|": [None, While, WhileEnd],
+        ";": [None, InputOutput, InputOutput],
+    }
+
+    def parse_text(self, text):
+        operators = []
+
+        direction = 1
+        for (num, char) in enumerate(text):
+            if char == "=":
+                direction *= -1
+            elif char in self.commands:
+                operator_type = self.commands[char][direction]
+                operators.append(operator_type(char, (num, num+1)))
+
+        return operators
+
+
+class InstructionPointerBF(Revision, CustomCommand):
+    """
+    Combining `Braincrash` and `PocketBF` languages.
+    There is a set of commands from `PocketBF` (`=+>|;`) and two
+    operators as in `Braincrash`:
+    +---+---------------------------------------------------------------+
+    | 0 | increments the pointer by 1                                   |
+    | 1 | executes the command under the pointer and increments it by 1 |
+    +---+---------------------------------------------------------------+
+    """
+
+    commands_order = "=+>|;"
+
+    commands = {
+        "+": [None, Increment, Decrement],
+        ">": [None, Right, Left],
+        "|": [None, While, WhileEnd],
+        ";": [None, InputOutput, InputOutput],
+    }
+
+    def parse_text(self, text):
+        operators = []
+
+        c_pointer = 0
+        direction = 1
+        for (num, char) in enumerate(text):
+            if char == "0":
+                c_pointer = (c_pointer + 1) % 5
+            elif char == "1":
+                char_com = self.commands_order[c_pointer]
+                if char_com == "=":
+                    direction *= -1
+                else:
+                    operator_type = self.commands[char_com][direction]
+                    operators.append(operator_type(char, (num, num + 1)))
+                c_pointer = (c_pointer + 1) % 5
+
+        return operators

@@ -97,7 +97,8 @@ List of implemented languages:
 
 Brainfuck, AAA, Alphuck, BinaryFuck, BrainSymbol, EmEmFuck, German, Headsecks,
 MessyScript, MorseFuck, Oof, Pewlang, ReverseFuck, Roadrunner, Ternary, Triplet,
-Unibrain, UwU, WholesomeFuck, Wordfuck, ZZZ, Blub, Fuckfuck, Ook, Pogaack
+Unibrain, UwU, WholesomeFuck, Wordfuck, ZZZ, Blub, Fuckfuck, Ook, Pogaack,
+Braincrash, PocketBF, InstructionPointerBF
 
 A description for them is available in the code or [here](https://esolangs.org/wiki/Category:Brainfuck_equivalents).
 
