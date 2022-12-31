@@ -57,6 +57,13 @@ class Cell:
         content = [self.sequence_to_size(line, width, " ") for line in content]
         return content
 
+    @property
+    def flat_view(self) -> str:
+        """
+        Returns its value in one line.
+        """
+        return " ".join(self.content)
+
 
 class TableGenerator:
     """
@@ -206,6 +213,29 @@ class TableGenerator:
             table_strings += generate_row(row, height)
             table_strings += [row_separator]
 
+        str_table = "\n".join(table_strings)
+        return str_table
+
+    def for_paste_view(self):
+        """
+        Returns a table that's useful for pasting into programs like
+        Google Docs.
+        The values are in one line and separated by tabulation, with the
+        rows following each other.
+
+        q\tw\te
+        a\ts\td
+        z\tx\tc
+        """
+
+        assert self.table, "No data - table is empty!"
+
+        table_strings = [
+            "\t".join(
+                cell.flat_view for cell in row
+            )
+            for row in self.table
+        ]
         str_table = "\n".join(table_strings)
         return str_table
 
