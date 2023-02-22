@@ -4,6 +4,9 @@ Another bicycle for generating tables.
 Another one, but my own.
 """
 
+from __future__ import annotations
+from typing import Union, Optional
+
 
 __all__ = [
     "TableGenerator",
@@ -33,7 +36,7 @@ class Cell:
         self.height = len(content)
         self.width = max(len(s) for s in content)
 
-    _Sequence = str | list
+    _Sequence = Union[str, list]
 
     @staticmethod
     def sequence_to_size(sequence: _Sequence, size: int, null: _Sequence) -> _Sequence:
@@ -79,6 +82,7 @@ class TableGenerator:
     heights: list[int]
     row_separator: str
     cell_separator: list[str]
+    name: Optional[str]
 
     def __init__(
             self,
@@ -86,11 +90,11 @@ class TableGenerator:
             header: list[str] = None,  # N-1/N vals
             params: list[str] = None,  # M vals
     ):
-        self.table = self.generate_table(body, header, params)
-        self.calculate_sizes()
+        self.table = self._generate_table(body, header, params)
+        self._calculate_sizes()
 
     @staticmethod
-    def generate_table(body, header, params) -> list[list[Cell]]:
+    def _generate_table(body, header, params) -> list[list[Cell]]:
         """
         It merges header, names and data into one table, checks for the
         correct size of the raw data, and converts everything to an
@@ -122,7 +126,7 @@ class TableGenerator:
         ]
         return table
 
-    def calculate_sizes(self) -> None:
+    def _calculate_sizes(self) -> None:
         """
         Calculates the maximum height/width values for rows/columns (to
         fit all the data). Based on this, it creates a separator for rows
@@ -141,6 +145,43 @@ class TableGenerator:
         horizontal_cell_separators = ["-" * width for width in self.widths]
         self.row_separator = "+".join([""] + horizontal_cell_separators + [""])
         self.cell_separator = ["|"] * (len(self.widths) + 1)
+
+    @staticmethod
+    def from_dicts_preprocess(value: list[list]) -> list[list]:
+        """
+        A little crutch with preprocessing data ( it's useful in my
+        current project :) ).
+        Replace this function by your custom preprocessing function.
+        For example, you can join lists or crop long strings.
+        Applies to each value from the table.
+        """
+        return value
+
+    @classmethod
+    def from_dicts(
+            cls,
+            data: list[dict],
+            *,
+            keys: list[str] = None,
+            names: list[str] = None,
+    ) -> TableGenerator:
+        """
+        Constructs a table from a list of dictionaries.
+        By default, it uses keys as table headers.
+        """
+
+        if not data:
+            return cls([])
+        if keys is None:
+            keys = data[0].keys()
+        if names is None:
+            names = keys
+
+        body = [
+            [cls.from_dicts_preprocess(item[key]) for key in keys]
+            for item in data
+        ]
+        return cls(body, names)
 
     def generate(
             self,
