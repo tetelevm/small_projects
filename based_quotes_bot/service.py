@@ -11,7 +11,7 @@ def get_quote(path: Path = QUOTES_PATH):
         data = file.read().splitlines()
 
     quotes = list(filter(lambda l: l and not l.startswith("#"), data))
-    return random.choice(quotes)
+    return random.choice(quotes).lower()
 
 
 async def wait_sending_time():
