@@ -40,7 +40,7 @@ def _env(arg: str):
     return _ENVS[arg]
 
 
-_ENVS_VERSION = "_TEST"
+_ENVS_VERSION = ""
 
 QUOTES_PATH = Path(__file__).parent / "quotes.txt"
 SENDING_TIME = datetime.timedelta(hours=5, minutes=0, seconds=0)  # UTC
