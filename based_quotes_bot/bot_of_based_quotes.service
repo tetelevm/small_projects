@@ -1,0 +1,15 @@
+
+[Unit]
+Description=Bot for sending quotes to the channel
+After=network.target
+
+[Service]
+ExecStart=/opt/small_project/based_qoutes_bot/env/bin/python3.12 main.py
+ExecReload=/opt/small_project/based_qoutes_bot/env/bin/python3.12 main.py
+WorkingDirectory=/opt/small_project/based_qoutes_bot/
+KillMode=process
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
