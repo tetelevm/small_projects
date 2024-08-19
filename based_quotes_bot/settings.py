@@ -1,16 +1,29 @@
 import datetime
+import logging
 from pathlib import Path
 
 
 __all__ = [
+    "logger",
     "QUOTES_PATH",
     "SENDING_TIME",
     "TOKEN",
     "CHAT_LINK",
 ]
 
-_ENVS: dict[str, str] | None = None
 
+logger = logging.getLogger("application")
+logger.setLevel(logging.INFO)
+_formatter = logging.Formatter("{asctime:<23} >>| {msg}", style='{')
+_file_handler = logging.FileHandler("logs.log", mode='a')
+_file_handler.setFormatter(_formatter)
+logger.addHandler(_file_handler)
+_terminal_handler = logging.StreamHandler()
+_terminal_handler.setFormatter(_formatter)
+logger.addHandler(_terminal_handler)
+
+
+_ENVS: dict[str, str] | None = None
 
 def _read_env():
     env_path = Path(__file__).parent / ".env"
