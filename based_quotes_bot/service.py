@@ -3,7 +3,7 @@ import datetime
 import random
 from pathlib import Path
 
-from settings import SENDING_TIME, QUOTES_PATH
+from settings import logger, SENDING_TIME, QUOTES_PATH
 
 
 def get_quote(path: Path = QUOTES_PATH):
@@ -22,4 +22,6 @@ async def wait_sending_time():
     if now > sending_datetime:
         sending_datetime += datetime.timedelta(days=1)
 
-    await asyncio.sleep((sending_datetime - now).seconds)
+    waiting_time = (sending_datetime - now).seconds
+    logger.info(f"Waiting {waiting_time} seconds")
+    await asyncio.sleep(waiting_time)

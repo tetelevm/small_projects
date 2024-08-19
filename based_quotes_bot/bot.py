@@ -2,7 +2,7 @@ from telegram import Bot
 from telegram.ext import Application, MessageHandler
 
 from service import get_quote
-from settings import CHAT_LINK
+from settings import logger, CHAT_LINK
 
 
 async def command_im_silly(update, context):
@@ -22,6 +22,7 @@ async def app_init(token: str):
 
 async def send_quote(bot: Bot):
     quote = get_quote()
+    logger.info(f"Sending quote < {quote} >")
     return await bot.send_message(
         chat_id=CHAT_LINK,
         text=quote,

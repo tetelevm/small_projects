@@ -43,7 +43,7 @@ def _env(arg: str):
 _ENVS_VERSION = "_TEST"
 
 QUOTES_PATH = Path(__file__).parent / "quotes.txt"
-SENDING_TIME = datetime.timedelta(hours=19, minutes=22, seconds=0)
+SENDING_TIME = datetime.timedelta(hours=5, minutes=0, seconds=0)  # UTC
 
 TOKEN = _env("TOKEN" + _ENVS_VERSION)
 CHAT_LINK = _env("CHAT_LINK" + _ENVS_VERSION)
