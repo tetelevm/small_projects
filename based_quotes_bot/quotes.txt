@@ -2,35 +2,6 @@
 # - one line - one quote
 # - blank lines and lines starting with # are ignored
 
-# Agata Kristi
-# Aria
-# ATL
-# Bashlachev
-# Bi-2
-# Automatic Chance
-# Disturbed
-# Eminem
-# Grazhdanskaya Oborona / other Letov
-# HORUS / Luperkal
-# Korn
-# Markul
-# Mumii Troll
-# Nautilus Pompilius
-# Nepomnyashii
-# Oomph!
-# Oxxxymiron
-# Powerwolf
-
-
-# Promyshlennaya Arkhitektura
-
-с каждым днем больше смысла
-голод приходит когда хочется есть
-когда темно наступает страх
-для любой системы неизбежен крах
-
-# Rammstein / Lindemann
-# Ruoska
-# Sabaton
-# Slipknot
-# System of A Down / Tankian
+test
+test test
+test test test
