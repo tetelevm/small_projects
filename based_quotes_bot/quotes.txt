@@ -1,7 +1,0 @@
-# Format:
-# - one line - one quote
-# - blank lines and lines starting with # are ignored
-
-test
-test test
-test test test
