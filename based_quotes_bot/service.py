@@ -1,12 +1,23 @@
-import asyncio
 import datetime
 import random
 from pathlib import Path
 
-from settings import logger, SENDING_TIME, QUOTES_PATH
+from settings import SENDING_TIME, QUOTES_PATH
 
 
-def get_quote(path: Path = QUOTES_PATH):
+__all__ = [
+    "get_quote",
+    "calc_waiting_seconds",
+]
+
+
+def get_quote(path: Path = QUOTES_PATH) -> str:
+    """
+    Reads data files, filters and returns a random quote.
+    The reading is performed each time before a choice to allow updating
+    the data without restarting the project.
+    """
+
     with open(path.absolute()) as file:
         data = file.read().splitlines()
 
@@ -14,7 +25,7 @@ def get_quote(path: Path = QUOTES_PATH):
     return random.choice(quotes).lower()
 
 
-async def wait_sending_time():
+def calc_waiting_seconds() -> int:
     now = datetime.datetime.now(datetime.UTC)
     today = datetime.datetime.combine(now, datetime.time(), tzinfo=datetime.UTC)
     sending_datetime = today + SENDING_TIME
@@ -23,5 +34,4 @@ async def wait_sending_time():
         sending_datetime += datetime.timedelta(days=1)
 
     waiting_time = (sending_datetime - now).seconds
-    logger.info(f"Waiting {waiting_time} seconds")
-    await asyncio.sleep(waiting_time)
+    return waiting_time

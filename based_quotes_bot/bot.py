@@ -1,8 +1,7 @@
 from telegram import Bot
 from telegram.ext import Application, MessageHandler
 
-from service import get_quote
-from settings import logger, CHAT_LINK
+from settings import CHAT_LINK
 
 
 async def command_im_silly(update, context):
@@ -12,6 +11,10 @@ async def command_im_silly(update, context):
 
 
 async def app_init(token: str):
+    """
+    The bot just displays a stub when any message are received.
+    """
+
     app = Application.builder().token(token).build()
     app.add_handler(MessageHandler(None, command_im_silly, False))
 
@@ -20,9 +23,7 @@ async def app_init(token: str):
     await app.start()
 
 
-async def send_quote(bot: Bot):
-    quote = get_quote()
-    logger.info(f"Sending quote < {quote} >")
+async def send_quote(bot: Bot, quote: str):
     return await bot.send_message(
         chat_id=CHAT_LINK,
         text=quote,
