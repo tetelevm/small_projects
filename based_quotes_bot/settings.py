@@ -42,7 +42,7 @@ def _env(arg: str, default=None):
 
 _LAUNCH_VERSION = _env("LAUNCH_VERSION", "PRODUCTION")
 
-QUOTES_PATH = Path(__file__).parent / "quotes.txt"
+QUOTES_PATH = Path(__file__).parent / "data"
 SENDING_TIME = datetime.timedelta(hours=5, minutes=0, seconds=0)  # UTC
 
 TOKEN = _env("TOKEN" + "_" + _LAUNCH_VERSION)

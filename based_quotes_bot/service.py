@@ -18,8 +18,10 @@ def get_quote(path: Path = QUOTES_PATH) -> str:
     the data without restarting the project.
     """
 
-    with open(path.absolute()) as file:
-        data = file.read().splitlines()
+    data = []
+    for file_path in path.absolute().glob("*.txt"):
+        with open(file_path) as file:
+            data.extend(file.read().splitlines())
 
     quotes = list(filter(lambda l: l and not l.startswith("#"), data))
     return random.choice(quotes).lower()
