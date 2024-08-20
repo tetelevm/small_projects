@@ -31,6 +31,7 @@ def _read_env():
         data = file.read().splitlines()
 
     global _ENVS
+    data = list(filter(bool, data))
     _ENVS = dict(line.split("=") for line in data)
 
 
